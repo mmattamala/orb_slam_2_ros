@@ -110,7 +110,10 @@ System::System(const string strVocFile, const string strSettingsFile, const eSen
     mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
 
     //Initialize the Loop Closing thread and launch
-    mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
+    bool disableLc = static_cast<int>(fsSettings["LoopCLosure.disable"]) > 0;
+    cout << "[Loop Closure]" << (disableLc? "DISABLED" : "ENABLED") << endl;
+
+    mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR, disableLc);
     mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
 
     //Set pointers between threads

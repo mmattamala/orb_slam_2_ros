@@ -51,7 +51,7 @@ public:
 
 public:
 
-    LoopClosing(Map* pMap, KeyFrameDatabase* pDB, ORBVocabulary* pVoc,const bool bFixScale);
+    LoopClosing(Map* pMap, KeyFrameDatabase* pDB, ORBVocabulary* pVoc,const bool bFixScale, const bool disabled);
 
     void SetTracker(Tracking* pTracker);
 
@@ -83,6 +83,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 protected:
+    bool CheckEnabled();
 
     bool CheckNewKeyFrames();
 
@@ -144,6 +145,9 @@ protected:
 
 
     bool mnFullBAIdx;
+
+    // Disable loop closing
+    bool mbDisabled;
 };
 
 } //namespace ORB_SLAM

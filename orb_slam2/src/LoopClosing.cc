@@ -35,10 +35,10 @@
 namespace ORB_SLAM2
 {
 
-LoopClosing::LoopClosing(Map *pMap, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale):
+LoopClosing::LoopClosing(Map *pMap, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale, const bool disabled):
     mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
     mpKeyFrameDB(pDB), mpORBVocabulary(pVoc), mpMatchedKF(NULL), mLastLoopKFid(0), mbRunningGBA(false), mbFinishedGBA(true),
-    mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(false)
+    mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(false), mbDisabled(disabled)
 {
     mnCovisibilityConsistencyTh = 3;
 }
@@ -60,19 +60,22 @@ void LoopClosing::Run()
 
     while(1)
     {
-        // Check if there are keyframes in the queue
-        if(CheckNewKeyFrames())
+        if(CheckEnabled())
         {
-            // Detect loop candidates and check covisibility consistency
-            if(DetectLoop())
+            // Check if there are keyframes in the queue
+            if(CheckNewKeyFrames())
             {
-               // Compute similarity transformation [sR|t]
-               // In the stereo/RGBD case s=1
-               if(ComputeSim3())
-               {
-                   // Perform loop fusion and pose graph optimization
-                   CorrectLoop();
-               }
+                // Detect loop candidates and check covisibility consistency
+                if(DetectLoop())
+                {
+                // Compute similarity transformation [sR|t]
+                // In the stereo/RGBD case s=1
+                if(ComputeSim3())
+                {
+                    // Perform loop fusion and pose graph optimization
+                    CorrectLoop();
+                }
+                }
             }
         }
 
@@ -98,6 +101,12 @@ bool LoopClosing::CheckNewKeyFrames()
 {
     unique_lock<mutex> lock(mMutexLoopQueue);
     return(!mlpLoopKeyFrameQueue.empty());
+}
+
+bool LoopClosing::CheckEnabled()
+{
+    unique_lock<mutex> lock(mMutexLoopQueue);
+    return !mbDisabled;
 }
 
 bool LoopClosing::DetectLoop()
